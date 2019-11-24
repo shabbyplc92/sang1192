@@ -44,9 +44,19 @@ def handle_events():
 
 class BackGround:
     def __init__(self):
-        self.image = load_image('background.png')
+        self.image = load_image('Road.png')
+        self.image2 = load_image('background.png')
+        self.y = 0
     def draw(self):
-        self.image.draw(400,500)
+        self.y += 10
+        self.image2.draw(300,400)
+
+        if self.y > 3000:
+            self.y -= 3000
+
+
+        self.image.clip_draw(0, 0 ,300 , 3000,300,400-self.y)
+        self.image.clip_draw(0, 0, 300, 3000, 300, 3400-self.y)
 
 class Explsion:
     def __init__(self,x,y):
@@ -69,12 +79,14 @@ class Player:
         self.x, self.y = 240, 100
         self.speed_x = 0
         self.speed_y = 0
-        self.size = 20
+        self.size = 30
+        self.hp = 10
         #attack
         self.attack = False
         self.attack_time = 3
         #image
         self.image = load_image('fighter.png')
+        self.power = 0
 
     def update(self):
         self.x += self.speed_x
@@ -83,11 +95,34 @@ class Player:
         if self.attack:
             self.attack_time -= 1
             if self.attack_time <= 0:
-                player_bullets.append(Player_Bullet(self.x,self.y+20))
-                self.attack_time = 3
+                if self.power == 0:
+                    player_bullets.append(Player_Bullet(self.x,self.y+20))
+                    self.attack_time = 3
+                elif self.power == 1:
+                    player_bullets.append(Player_Bullet(self.x+4,self.y+20))
+                    player_bullets.append(Player_Bullet(self.x - 4, self.y + 20))
+                    self.attack_time = 3
+                elif self.power >= 2:
+                    player_bullets.append(Player_Bullet(self.x+5,self.y+20))
+                    player_bullets.append(Player_Bullet(self.x, self.y + 20))
+                    player_bullets.append(Player_Bullet(self.x - 5, self.y + 20))
+                    self.attack_time = 3
+
+    def power_up(self):
+        self.power+=1
 
     def draw(self):
-        self.image.clip_draw(0, 0, 40, 42, self.x, self.y)
+        self.image.clip_draw(0, 0, 80, 48, self.x, self.y)
+
+class ItemL:
+    def __init__(self,x,y):
+        self.image = load_image('itemL.png')
+        self.y = y
+        self.x = x
+        self.size = 40
+    def draw(self):
+        self.y -= 10
+        self.image.clip_draw(0, 0 ,90 ,95,self.x,self.y)
 
 class Player_Bullet:
 
@@ -109,7 +144,7 @@ class Enemy:
         self.x, self.y = random.randint(50,430),1100
         self.speed_x = 0
         self.speed_y = -5
-        self.hp = 2
+        self.hp = 5
         self.size = 20
         self.fire_time = 50
         self.image = load_image('Enemy.png')
@@ -159,6 +194,75 @@ class Meteor:
     def draw(self):
         self.image.clip_draw(0, 0, 75, 37, self.x, self.y)
 
+class Boss:
+    global enemy_bullets
+
+    def __init__(self):
+        self.x, self.y = 300, 1100
+        self.speed_x = 0
+        self.speed_y = -5
+        self.hp = 300
+        self.size = 150
+        self.fire_time = 50
+        self.fire_time2 = 50
+        self.image = load_image('Boss.png')
+
+    def update(self):
+        self.x += self.speed_x
+        self.y += self.speed_y
+
+        if self.y < 700:
+            self.y = 700
+
+        self.fire_time -= 1
+        if self.fire_time <= 0:
+            self.fire_time = 50
+            enemy_bullets.append(Boss_Bullet(random.randint(0, 600), self.y - 20))
+            enemy_bullets.append(Boss_Bullet(random.randint(0, 600), self.y - 20))
+            enemy_bullets.append(Boss_Bullet(random.randint(0, 600), self.y - 20))
+
+        self.fire_time2 -=2
+        if self.fire_time2 <= 0:
+            self.fire_time2 = 50
+            enemy_bullets.append(Enemy_Bullet(random.randint(0, 600), self.y - 20))
+            enemy_bullets.append(Enemy_Bullet(random.randint(0, 600), self.y - 20))
+            enemy_bullets.append(Enemy_Bullet(random.randint(0, 600), self.y - 20))
+
+
+        if self.hp <= 0:
+            return False
+
+        return True
+
+    def draw(self):
+        self.image.clip_draw(0, 0, 410, 157, self.x, self.y)
+
+class Boss_Bullet:
+    def __init__(self,x,y):
+        self.x, self.y = x, y
+        self.speed_y = -13
+        self.size = 15
+        self.image = load_image('boss_bullet.png')
+
+    def update(self):
+        self.y += self.speed_y
+        if player.x < self.x:
+            self.x -= (self.x-player.x)/25
+        elif player.x > self.x:
+            self.x -= (self.x-player.x)/25
+
+    def draw(self):
+        self.image.clip_draw(0, 0, 30, 30, self.x, self.y)
+
+class UI:
+    def __init__(self):
+        self.image = load_image('heart.png')
+
+
+    def draw(self):
+        for i in range(0,player.hp):
+            self.image.clip_draw(0, 0, 424, 369, 20+(i*30),750,30,30)
+
 #Logic function
 def AABB(x1,y1,size1,x2,y2,size2):
     if x1-size1 > x2+size2:
@@ -180,27 +284,26 @@ def spawn_Enemy():
     global spawn_position_x
     global spawn_dist
 
-    if spawn_position_x > 750:
-        spawn_dist = -50
-    elif spawn_position_x < 50:
-        spawn_dist = 50
+    spawn_position_x = random.randint(0,600)
 
     spawn_time -= 1
     if spawn_time == 0:
-        spawn_time = 10
+        spawn_time = 30
         enemys.append(Enemy())
         enemys[-1].x = spawn_position_x
         spawn_position_x += spawn_dist
 
 
 # initialization code
-open_canvas(800,1000)
+open_canvas(600,800)
 background = BackGround()
 
 player = Player()
 meteor = Meteor()
-
+ui = UI()
 enemys = list()
+
+item = list()
 
 player_bullets = list()
 enemy_bullets = list()
@@ -208,6 +311,7 @@ enemy_bullets = list()
 explosion = list()
 
 spawn_time = 100
+game_time = 0
 
 
 is_game_loop = True
@@ -217,7 +321,11 @@ while is_game_loop:
     handle_events()
     clear_canvas()
 
-    spawn_Enemy()
+    if game_time < 300:
+        spawn_Enemy()
+    elif game_time == 300:
+        enemys.append(Boss())
+
 
     #Update--------------------------------------
     #meteor.update()
@@ -225,6 +333,9 @@ while is_game_loop:
 
     for enemy in enemys:
         if enemy.update() == False: #hp < 0 -> list remove
+            rand = random.randint(0,10)
+            if rand > 8:
+                item.append(ItemL(enemy.x,enemy.y))
             enemys.remove(enemy)
 
     for e_bullet in enemy_bullets:
@@ -242,6 +353,7 @@ while is_game_loop:
     for bullet in enemy_bullets:
         if AABB(player.x,player.y,player.size,bullet.x,bullet.y,bullet.size):
             explosion.append(Explsion(bullet.x,bullet.y))
+            player.hp -= 1
             enemy_bullets.remove(bullet)
     for enemy in enemys:
         for bullet in player_bullets:
@@ -249,12 +361,20 @@ while is_game_loop:
                 explosion.append(Explsion(bullet.x, bullet.y))
                 enemy.hp -= 1
                 player_bullets.remove(bullet)
+
+    for it in item:
+        if AABB(player.x,player.y,player.size,it.x,it.y,it.size):
+            player.power_up()
+            item.remove(it)
     # Collsion Detect------------------------------
 
 
     #Draw------------------------------------------
     background.draw()
     player.draw()
+
+    for it in item:
+        it.draw()
 
     for enemy in enemys:
         enemy.draw()
@@ -265,12 +385,14 @@ while is_game_loop:
     for explo in explosion:
         explo.draw()
     #meteor.draw()
+    ui.draw()
 
     update_canvas()
     # Draw------------------------------------------
 
 
     delay(0.03)
+    game_time += 1
 
 close_canvas()
 
