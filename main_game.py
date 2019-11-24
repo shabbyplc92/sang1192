@@ -112,7 +112,7 @@ class Player:
         self.power+=1
 
     def draw(self):
-        self.image.clip_draw(0, 0, 80, 48, self.x, self.y)
+        self.image.clip_draw(0, 0, 80, 48, self.x, self.y,60,60)
 
 class ItemL:
     def __init__(self,x,y):
@@ -136,7 +136,7 @@ class Player_Bullet:
         self.y += self.speed_y
 
     def draw(self):
-        self.image.clip_draw(0, 0, 10, 23, self.x, self.y)
+        self.image.clip_draw(0, 0, 10, 23, self.x, self.y,10,15)
 
 class Enemy:
     global enemy_bullets
@@ -158,6 +158,9 @@ class Enemy:
             self.fire_time = 50
             enemy_bullets.append(Enemy_Bullet(self.x,self.y-20))
 
+        if self.y <= 0:
+            return False
+
         if self.hp <= 0:
             return False
 
@@ -177,7 +180,7 @@ class Enemy_Bullet:
         self.y += self.speed_y
 
     def draw(self):
-        self.image.clip_draw(0, 0, 10, 23, self.x, self.y)
+        self.image.clip_draw(0, 0, 10, 23, self.x, self.y,10,15)
 
 class Meteor:
     def __init__(self):
@@ -227,6 +230,9 @@ class Boss:
             enemy_bullets.append(Enemy_Bullet(random.randint(0, 600), self.y - 20))
             enemy_bullets.append(Enemy_Bullet(random.randint(0, 600), self.y - 20))
             enemy_bullets.append(Enemy_Bullet(random.randint(0, 600), self.y - 20))
+            enemy_bullets.append(Enemy_Bullet(random.randint(0, 600), self.y - 20))
+            enemy_bullets.append(Enemy_Bullet(random.randint(0, 600), self.y - 20))
+            enemy_bullets.append(Enemy_Bullet(random.randint(0, 600), self.y - 20))
 
 
         if self.hp <= 0:
@@ -260,6 +266,10 @@ class UI:
 
 
     def draw(self):
+        global is_game_loop
+        if player.hp<= 0:
+            is_game_loop = False
+
         for i in range(0,player.hp):
             self.image.clip_draw(0, 0, 424, 369, 20+(i*30),750,30,30)
 
@@ -321,9 +331,9 @@ while is_game_loop:
     handle_events()
     clear_canvas()
 
-    if game_time < 300:
+    if game_time < 500:
         spawn_Enemy()
-    elif game_time == 300:
+    elif game_time == 500:
         enemys.append(Boss())
 
 
