@@ -272,12 +272,19 @@ class UI:
     def __init__(self):
         self.image = load_image('heart.png')
         self.gameOverImage = load_image('gameover.png')
+        self.bossHp = load_image('healthBar.png')
+
+        self.existBoss = False
 
 
     def draw(self):
         global is_game_loop
+        global enemys
         if player.hp<= 0:
             is_game_loop = False
+
+        if self.existBoss:
+            self.bossHp.clip_draw(0,0,470,140,enemys[-1].x,enemys[-1].y+100,200 * (enemys[-1].hp / 300),50)
 
         for i in range(0,player.hp):
             self.image.clip_draw(0, 0, 424, 369, 20+(i*30),750,30,30)
@@ -364,6 +371,7 @@ game_time = 0
 
 is_game_loop = True
 game_over = False
+player_invincibility = False
 
 # game main loop code
 while is_game_loop:
@@ -377,6 +385,7 @@ while is_game_loop:
         spawn_Enemy()
     elif game_time == 500:
         enemys.append(Boss())
+        ui.existBoss = True
 
 
     #Update--------------------------------------
@@ -406,7 +415,9 @@ while is_game_loop:
     for bullet in enemy_bullets:
         if AABB(player.x,player.y,player.size,bullet.x,bullet.y,bullet.size):
             explosion.append(Explsion(bullet.x,bullet.y))
-            player.hp -= 1
+            if player_invincibility == False:
+                player.hp -= 1
+                player_invincibility= True
             enemy_bullets.remove(bullet)
     for enemy in enemys:
         for bullet in player_bullets:
