@@ -44,19 +44,22 @@ def handle_events():
 
 class BackGround:
     def __init__(self):
-        self.image = load_image('Road.png')
-        self.image2 = load_image('background.png')
+        self.roadImage = load_image('Road.png')
+        self.backGroundImage = load_image('background.png')
         self.y = 0
+        self.backGroundMusic = load_wav('music.wav')
+        self.backGroundMusic.set_volume(64)
+        self.backGroundMusic.repeat_play()
     def draw(self):
         self.y += 10
-        self.image2.draw(300,400)
+        self.backGroundImage.draw(300,400)
 
         if self.y > 3000:
             self.y -= 3000
 
 
-        self.image.clip_draw(0, 0 ,300 , 3000,300,400-self.y)
-        self.image.clip_draw(0, 0, 300, 3000, 300, 3400-self.y)
+        self.roadImage.clip_draw(0, 0 ,300 , 3000,300,400-self.y)
+        self.roadImage.clip_draw(0, 0, 300, 3000, 300, 3400-self.y)
 
 class Explsion:
     def __init__(self,x,y):
@@ -88,6 +91,9 @@ class Player:
         self.image = load_image('fighter.png')
         self.power = 0
 
+        self.missileSound = load_wav('missile.wav')
+        self.missileSound.set_volume(32)
+
     def update(self):
         self.x += self.speed_x
         self.y += self.speed_y
@@ -107,6 +113,8 @@ class Player:
                     player_bullets.append(Player_Bullet(self.x, self.y + 20))
                     player_bullets.append(Player_Bullet(self.x - 5, self.y + 20))
                     self.attack_time = 3
+                self.missileSound.play()
+
 
     def power_up(self):
         self.power+=1
@@ -263,6 +271,7 @@ class Boss_Bullet:
 class UI:
     def __init__(self):
         self.image = load_image('heart.png')
+        self.gameOverImage = load_image('gameover.png')
 
 
     def draw(self):
@@ -272,6 +281,34 @@ class UI:
 
         for i in range(0,player.hp):
             self.image.clip_draw(0, 0, 424, 369, 20+(i*30),750,30,30)
+
+    def gameOverDraw(self):
+        self.gameOverImage.clip_draw(0,0,359,248,300,450)
+
+
+class SoundManager:
+    def __init__(self):
+        self.missileCollisionSound = load_wav('explosion01.wav')
+        self.enemyDeadSound = load_wav('explosion02.wav')
+        self.bossDeadSound = load_wav('explosion04.wav')
+        self.gameOverSound = load_wav('gameover.wav')
+
+        self.missileCollisionSound.set_volume(20)
+        self.enemyDeadSound.set_volume(40)
+        self.bossDeadSound.set_volume(20)
+        self.gameOverSound.set_volume(70)
+
+    def playSoundBossDead(self):
+        self.bossDeadSound.play()
+
+    def playSoundMissleCollision(self):
+        self.missileCollisionSound.play()
+
+    def playSoundEnemyDead(self):
+        self.enemyDeadSound.play()
+    def playSoundGameOver(self):
+        self.gameOverSound.play()
+
 
 #Logic function
 def AABB(x1,y1,size1,x2,y2,size2):
@@ -311,6 +348,7 @@ background = BackGround()
 player = Player()
 meteor = Meteor()
 ui = UI()
+soundMgr = SoundManager()
 enemys = list()
 
 item = list()
@@ -325,9 +363,13 @@ game_time = 0
 
 
 is_game_loop = True
+game_over = False
 
 # game main loop code
 while is_game_loop:
+
+
+
     handle_events()
     clear_canvas()
 
@@ -346,6 +388,7 @@ while is_game_loop:
             rand = random.randint(0,10)
             if rand > 8:
                 item.append(ItemL(enemy.x,enemy.y))
+            soundMgr.playSoundEnemyDead()
             enemys.remove(enemy)
 
     for e_bullet in enemy_bullets:
@@ -403,6 +446,26 @@ while is_game_loop:
 
     delay(0.03)
     game_time += 1
+
+
+soundMgr.playSoundGameOver()
+
+is_game_loop = True
+while is_game_loop:
+    handle_events()
+    explosion.append(Explsion(random.randint(0,600),random.randint(0,800)))
+    explosion.append(Explsion(random.randint(0, 600), random.randint(0, 800)))
+
+    for explo in explosion:
+        if explo.update():
+            explosion.remove(explo)
+
+    for explo in explosion:
+        explo.draw()
+
+    ui.gameOverDraw()
+    update_canvas()
+    delay(0.03)
 
 close_canvas()
 
