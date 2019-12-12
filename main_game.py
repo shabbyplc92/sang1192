@@ -373,111 +373,108 @@ is_game_loop = True
 game_over = False
 player_invincibility = False
 
-# game main loop code
-while is_game_loop:
 
+def main():
+    while is_game_loop:
 
+        handle_events()
+        clear_canvas()
 
-    handle_events()
-    clear_canvas()
+        if game_time < 500:
+            spawn_Enemy()
+        elif game_time == 500:
+            enemys.append(Boss())
+            ui.existBoss = True
 
-    if game_time < 500:
-        spawn_Enemy()
-    elif game_time == 500:
-        enemys.append(Boss())
-        ui.existBoss = True
+        # Update--------------------------------------
+        # meteor.update()
+        player.update()
 
+        for enemy in enemys:
+            if enemy.update() == False:  # hp < 0 -> list remove
+                rand = random.randint(0, 10)
+                if rand > 8:
+                    item.append(ItemL(enemy.x, enemy.y))
+                soundMgr.playSoundEnemyDead()
+                enemys.remove(enemy)
 
-    #Update--------------------------------------
-    #meteor.update()
-    player.update()
+        for e_bullet in enemy_bullets:
+            e_bullet.update()
 
-    for enemy in enemys:
-        if enemy.update() == False: #hp < 0 -> list remove
-            rand = random.randint(0,10)
-            if rand > 8:
-                item.append(ItemL(enemy.x,enemy.y))
-            soundMgr.playSoundEnemyDead()
-            enemys.remove(enemy)
+        for p_bullet in player_bullets:
+            p_bullet.update()
 
-    for e_bullet in enemy_bullets:
-        e_bullet.update()
+        for explo in explosion:
+            if explo.update():
+                explosion.remove(explo)
+        # Update--------------------------------------
 
-    for p_bullet in player_bullets:
-        p_bullet.update()
-
-    for explo in explosion:
-        if explo.update():
-            explosion.remove(explo)
-    # Update--------------------------------------
-
-    #Collsion Detect------------------------------
-    for bullet in enemy_bullets:
-        if AABB(player.x,player.y,player.size,bullet.x,bullet.y,bullet.size):
-            explosion.append(Explsion(bullet.x,bullet.y))
-            if player_invincibility == False:
-                player.hp -= 1
-                player_invincibility= True
-            enemy_bullets.remove(bullet)
-    for enemy in enemys:
-        for bullet in player_bullets:
-            if AABB(enemy.x, enemy.y, enemy.size, bullet.x, bullet.y, bullet.size):
+        # Collsion Detect------------------------------
+        for bullet in enemy_bullets:
+            if AABB(player.x, player.y, player.size, bullet.x, bullet.y, bullet.size):
                 explosion.append(Explsion(bullet.x, bullet.y))
-                enemy.hp -= 1
-                player_bullets.remove(bullet)
+                if player_invincibility == False:
+                    player.hp -= 1
+                    player_invincibility = True
+                enemy_bullets.remove(bullet)
+        for enemy in enemys:
+            for bullet in player_bullets:
+                if AABB(enemy.x, enemy.y, enemy.size, bullet.x, bullet.y, bullet.size):
+                    explosion.append(Explsion(bullet.x, bullet.y))
+                    enemy.hp -= 1
+                    player_bullets.remove(bullet)
 
-    for it in item:
-        if AABB(player.x,player.y,player.size,it.x,it.y,it.size):
-            player.power_up()
-            item.remove(it)
-    # Collsion Detect------------------------------
+        for it in item:
+            if AABB(player.x, player.y, player.size, it.x, it.y, it.size):
+                player.power_up()
+                item.remove(it)
+        # Collsion Detect------------------------------
+
+        # Draw------------------------------------------
+        background.draw()
+        player.draw()
+
+        for it in item:
+            it.draw()
+
+        for enemy in enemys:
+            enemy.draw()
+        for e_bullet in enemy_bullets:
+            e_bullet.draw()
+        for p_bullet in player_bullets:
+            p_bullet.draw()
+        for explo in explosion:
+            explo.draw()
+        # meteor.draw()
+        ui.draw()
+
+        update_canvas()
+        # Draw------------------------------------------
+
+        delay(0.03)
+        game_time += 1
+
+    soundMgr.playSoundGameOver()
+
+    is_game_loop = True
+    while is_game_loop:
+        handle_events()
+        explosion.append(Explsion(random.randint(0, 600), random.randint(0, 800)))
+        explosion.append(Explsion(random.randint(0, 600), random.randint(0, 800)))
+
+        for explo in explosion:
+            if explo.update():
+                explosion.remove(explo)
+
+        for explo in explosion:
+            explo.draw()
+
+        ui.gameOverDraw()
+        update_canvas()
+        delay(0.03)
+
+    close_canvas()
 
 
-    #Draw------------------------------------------
-    background.draw()
-    player.draw()
-
-    for it in item:
-        it.draw()
-
-    for enemy in enemys:
-        enemy.draw()
-    for e_bullet in enemy_bullets:
-        e_bullet.draw()
-    for p_bullet in player_bullets:
-        p_bullet.draw()
-    for explo in explosion:
-        explo.draw()
-    #meteor.draw()
-    ui.draw()
-
-    update_canvas()
-    # Draw------------------------------------------
-
-
-    delay(0.03)
-    game_time += 1
-
-
-soundMgr.playSoundGameOver()
-
-is_game_loop = True
-while is_game_loop:
-    handle_events()
-    explosion.append(Explsion(random.randint(0,600),random.randint(0,800)))
-    explosion.append(Explsion(random.randint(0, 600), random.randint(0, 800)))
-
-    for explo in explosion:
-        if explo.update():
-            explosion.remove(explo)
-
-    for explo in explosion:
-        explo.draw()
-
-    ui.gameOverDraw()
-    update_canvas()
-    delay(0.03)
-
-close_canvas()
-
-# finalization code
+if __name__ == "__main__":
+    main()
